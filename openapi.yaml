@@ -1,0 +1,150 @@
+openapi: 3.0.0
+info:
+  title: Customer Management API
+  version: 1.0.0
+  description: |
+    RESTful API for managing customers, including CRUD operations and tier calculation.
+    All endpoints are documented and tested. See README for usage and test script.
+paths:
+  /customer:
+    post:
+      summary: Create a new customer
+      description: Create a new customer. Tier is calculated automatically.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerRequest'
+      responses:
+        '201':
+          description: Customer created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponse'
+        '400':
+          description: Invalid request (e.g., email not provided or formatted incorrectly)
+    get:
+      summary: Retrieve a customer by name or email
+      description: Retrieve a customer by name or email. Only one parameter is required.
+      parameters:
+        - in: query
+          name: name
+          schema:
+            type: string
+          description: Customer name
+        - in: query
+          name: email
+          schema:
+            type: string
+          description: Customer email
+      responses:
+        '200':
+          description: Customer retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponse'
+        '404':
+          description: Customer not found
+  /customer/{id}:
+    get:
+      summary: Retrieve a customer by ID
+      description: Get a customer by their unique UUID.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Customer UUID
+      responses:
+        '200':
+          description: Customer retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponse'
+        '404':
+          description: Customer not found
+    put:
+      summary: Update customer details by ID
+      description: Update an existing customer by UUID. Tier is recalculated.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Customer UUID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerRequest'
+      responses:
+        '200':
+          description: Customer updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerResponse'
+        '400':
+          description: Invalid request
+        '404':
+          description: Customer not found
+    delete:
+      summary: Delete a customer by ID
+      description: Delete a customer by their unique UUID.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Customer UUID
+      responses:
+        '200':
+          description: Customer deleted
+        '404':
+          description: Customer not found
+components:
+  schemas:
+    CustomerRequest:
+      type: object
+      description: Request payload for creating or updating a customer.
+      properties:
+        name:
+          type: string
+          description: Customer's full name
+        email:
+          type: string
+          description: Customer's email address (must be unique)
+        annualSpend:
+          type: number
+          format: double
+          description: Annual spend in USD
+        lastPurchaseDate:
+          type: string
+          format: date-time
+          description: ISO8601 date of last purchase
+      required:
+        - name
+        - email
+    CustomerResponse:
+      allOf:
+        - $ref: '#/components/schemas/CustomerRequest'
+        - type: object
+          properties:
+            id:
+              type: string
+              description: Customer UUID
+            tier:
+              type: string
+              description: Calculated customer tier (Silver, Gold, Platinum)
+              enum:
+                - Silver
+                - Gold
+                - Platinum
